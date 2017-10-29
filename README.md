@@ -1,5 +1,12 @@
 ## Installation
 
+
+First of all, please install elm runtime: 
+
+```sh
+yarn global add elm
+```
+
 Clone this repo into a new project folder and run install script.
 
 ```sh
@@ -9,4 +16,4 @@ $ yarn
 $ yarn dev
 ```
 
-Open http://localhost:3000 and start modifying the code in /src.
+Open http://localhost:3000 and you should be good to go!
