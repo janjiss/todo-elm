@@ -20,11 +20,12 @@ main =
 
 init : ( Model, Cmd msg )
 init =
-    ( 1, Cmd.none )
+    ( Model [ "New task", "Another task" ], Cmd.none )
 
 
 type alias Model =
-    Int
+    { entries : List String
+    }
 
 
 type Msg
@@ -34,20 +35,28 @@ type Msg
 
 update : Msg -> Model -> ( Model, Cmd msg )
 update msg model =
-    case msg of
-        Increment ->
-            ( model + 1, Cmd.none )
-
-        Decrement ->
-            ( model + -1, Cmd.none )
+    ( model, Cmd.none )
 
 
 view : Model -> Html Msg
 view model =
-    div []
-        [ input [ type_ "button", onClick Increment, value "Increment" ] []
-        , div [] []
-        , text (toString model)
-        , div [] []
-        , input [ type_ "button", onClick Decrement, value "Decrement" ] []
+    div [ class "todomvc-wrapper" ]
+        [ section [ class "todoapp" ]
+            [ showEntries
+                model.entries
+            ]
+        ]
+
+
+showEntries entries =
+    section [ class "main" ]
+        [ ul [ class "todo-list" ] (List.map showEntry entries)
+        ]
+
+
+showEntry entry =
+    li []
+        [ div [ class "view" ]
+            [ label [] [ text entry ]
+            ]
         ]
