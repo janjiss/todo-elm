@@ -7,8 +7,9 @@ var Elm = require('./Todo');
 var storedState = localStorage.getItem('elm-todo-save');
 var startingState = storedState ? JSON.parse(storedState) : null;
 
-var todomvc = Elm.Todo.fullscreen(startingState);
+//var todomvc = Elm.Todo.fullscreen(startingState);
+var todomvc = Elm.Todo.fullscreen();
 
-todomvc.ports.setStorage.subscribe(function(state) {
-    localStorage.setItem('elm-todo-save', JSON.stringify(state));
-});
+// todomvc.ports.setStorage.subscribe(function(state) {
+//     localStorage.setItem('elm-todo-save', JSON.stringify(state));
+// });
