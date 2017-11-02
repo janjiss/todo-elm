@@ -20,31 +20,44 @@ main =
 
 init : ( Model, Cmd msg )
 init =
-    ( Model [ "New task", "Another task" ], Cmd.none )
+    ( Model [ "New task", "Another task" ] "", Cmd.none )
 
 
 type alias Model =
     { entries : List String
+    , currentInput : String
     }
 
 
 type Msg
-    = Increment
-    | Decrement
+    = Add
+    | ChangeInput String
 
 
 update : Msg -> Model -> ( Model, Cmd msg )
 update msg model =
-    ( model, Cmd.none )
+    case msg of
+        Add ->
+            ( { model | entries = List.append model.entries [ model.currentInput ], currentInput = "" }, Cmd.none )
+
+        ChangeInput newInput ->
+            ( { model | currentInput = newInput }, Cmd.none )
 
 
 view : Model -> Html Msg
 view model =
     div [ class "todomvc-wrapper" ]
         [ section [ class "todoapp" ]
-            [ showEntries
-                model.entries
+            [ showHeader model
+            , showEntries model.entries
             ]
+        ]
+
+
+showHeader model =
+    header [ class "header" ]
+        [ h1 [] [ text "todos" ]
+        , input [ class "new-todo", value model.currentInput, placeholder "What needs to be done?", onEnter Add, onInput ChangeInput ] []
         ]
 
 
@@ -60,3 +73,14 @@ showEntry entry =
             [ label [] [ text entry ]
             ]
         ]
+
+
+onEnter msg =
+    let
+        isEnter key =
+            if key == 13 then
+                Json.succeed msg
+            else
+                Json.fail "Not Enter"
+    in
+        on "keydown" (Json.andThen isEnter keyCode)
