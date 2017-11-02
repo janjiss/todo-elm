@@ -42,6 +42,7 @@ type Msg
     | ChangeInput String
     | Check Int
     | Delete Int
+    | CheckAll
 
 
 update : Msg -> Model -> ( Model, Cmd msg )
@@ -66,6 +67,16 @@ update msg model =
                         entry
             in
                 ( { model | entries = List.map checkEntry model.entries }, Cmd.none )
+
+        CheckAll ->
+            let
+                allCompleted =
+                    List.all .isCompleted model.entries
+
+                updateEntry e =
+                    { e | isCompleted = not allCompleted }
+            in
+                ( { model | entries = List.map updateEntry model.entries }, Cmd.none )
 
         Delete uid ->
             ( { model | entries = List.filter (\e -> not (e.uid == uid)) model.entries }, Cmd.none )
@@ -92,7 +103,8 @@ showHeader model =
 showEntries : List Entry -> Html Msg
 showEntries entries =
     section [ class "main" ]
-        [ ul [ class "todo-list" ] (List.map showEntry entries)
+        [ input [ class "toggle-all", type_ "checkbox", onClick CheckAll ] []
+        , ul [ class "todo-list" ] (List.map showEntry entries)
         ]
 
 
@@ -107,7 +119,7 @@ showEntry entry =
     in
         li [ class isCompletedClass ]
             [ div [ class "view" ]
-                [ input [ class "toggle", type_ "checkbox", onClick (Check entry.uid) ] []
+                [ input [ class "toggle", type_ "checkbox", onClick (Check entry.uid), checked entry.isCompleted ] []
                 , label [] [ text entry.description ]
                 , button [ class "destroy", onClick (Delete entry.uid) ] []
                 ]
