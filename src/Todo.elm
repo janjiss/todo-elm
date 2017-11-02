@@ -45,6 +45,7 @@ type Msg
     | Delete Int
     | CheckAll
     | ChangeFilter String
+    | ClearCompleted
 
 
 update : Msg -> Model -> ( Model, Cmd msg )
@@ -85,6 +86,9 @@ update msg model =
 
         ChangeFilter filter ->
             ( { model | filter = filter }, Cmd.none )
+
+        ClearCompleted ->
+            ( { model | entries = List.filter (\e -> not e.isCompleted) model.entries }, Cmd.none )
 
 
 view : Model -> Html Msg
@@ -149,6 +153,9 @@ showFooter model =
         itemsLeftInTodo =
             List.filter (\e -> not e.isCompleted) model.entries |> List.length
 
+        itemsDone =
+            List.filter (\e -> e.isCompleted) model.entries |> List.length
+
         selectedClass filter =
             if model.filter == filter then
                 "selected"
@@ -170,6 +177,9 @@ showFooter model =
                 , li []
                     [ a [ class (selectedClass "Completed"), onClick (ChangeFilter "Completed") ] [ text "Completed" ]
                     ]
+                ]
+            , button [ class "clear-completed", onClick ClearCompleted ]
+                [ text ("Clear Completed (" ++ (toString itemsDone) ++ ")")
                 ]
             ]
 
