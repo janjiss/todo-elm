@@ -20,28 +20,51 @@ main =
 
 init : ( Model, Cmd msg )
 init =
-    ( Model [ "New task", "Another task" ] "", Cmd.none )
+    ( Model [] 0 "", Cmd.none )
 
 
 type alias Model =
-    { entries : List String
+    { entries : List Entry
+    , currentUid : Int
     , currentInput : String
+    }
+
+
+type alias Entry =
+    { uid : Int
+    , description : String
+    , isCompleted : Bool
     }
 
 
 type Msg
     = Add
     | ChangeInput String
+    | Check Int
 
 
 update : Msg -> Model -> ( Model, Cmd msg )
 update msg model =
     case msg of
         Add ->
-            ( { model | entries = List.append model.entries [ model.currentInput ], currentInput = "" }, Cmd.none )
+            let
+                newEntriesList =
+                    List.append model.entries [ Entry model.currentUid model.currentInput False ]
+            in
+                ( { model | entries = newEntriesList, currentInput = "", currentUid = model.currentUid + 1 }, Cmd.none )
 
         ChangeInput newInput ->
             ( { model | currentInput = newInput }, Cmd.none )
+
+        Check uid ->
+            let
+                checkEntry entry =
+                    if entry.uid == uid then
+                        { entry | isCompleted = not entry.isCompleted }
+                    else
+                        entry
+            in
+                ( { model | entries = List.map checkEntry model.entries }, Cmd.none )
 
 
 view : Model -> Html Msg
@@ -54,6 +77,7 @@ view model =
         ]
 
 
+showHeader : Model -> Html Msg
 showHeader model =
     header [ class "header" ]
         [ h1 [] [ text "todos" ]
@@ -61,20 +85,31 @@ showHeader model =
         ]
 
 
+showEntries : List Entry -> Html Msg
 showEntries entries =
     section [ class "main" ]
         [ ul [ class "todo-list" ] (List.map showEntry entries)
         ]
 
 
+showEntry : Entry -> Html Msg
 showEntry entry =
-    li []
-        [ div [ class "view" ]
-            [ label [] [ text entry ]
+    let
+        isCompletedClass =
+            if entry.isCompleted then
+                "completed"
+            else
+                ""
+    in
+        li [ class isCompletedClass ]
+            [ div [ class "view" ]
+                [ input [ class "toggle", type_ "checkbox", onClick (Check entry.uid) ] []
+                , label [] [ text entry.description ]
+                ]
             ]
-        ]
 
 
+onEnter : Msg -> Attribute Msg
 onEnter msg =
     let
         isEnter key =
