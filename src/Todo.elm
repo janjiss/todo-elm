@@ -41,6 +41,7 @@ type Msg
     = Add
     | ChangeInput String
     | Check Int
+    | Delete Int
 
 
 update : Msg -> Model -> ( Model, Cmd msg )
@@ -65,6 +66,9 @@ update msg model =
                         entry
             in
                 ( { model | entries = List.map checkEntry model.entries }, Cmd.none )
+
+        Delete uid ->
+            ( { model | entries = List.filter (\e -> not (e.uid == uid)) model.entries }, Cmd.none )
 
 
 view : Model -> Html Msg
@@ -105,6 +109,7 @@ showEntry entry =
             [ div [ class "view" ]
                 [ input [ class "toggle", type_ "checkbox", onClick (Check entry.uid) ] []
                 , label [] [ text entry.description ]
+                , button [ class "destroy", onClick (Delete entry.uid) ] []
                 ]
             ]
 
