@@ -20,13 +20,14 @@ main =
 
 init : ( Model, Cmd msg )
 init =
-    ( Model [] 0 "", Cmd.none )
+    ( { entries = [], currentUid = 0, currentInput = "", filter = "All" }, Cmd.none )
 
 
 type alias Model =
     { entries : List Entry
     , currentUid : Int
     , currentInput : String
+    , filter : String
     }
 
 
@@ -43,6 +44,7 @@ type Msg
     | Check Int
     | Delete Int
     | CheckAll
+    | ChangeFilter String
 
 
 update : Msg -> Model -> ( Model, Cmd msg )
@@ -81,13 +83,17 @@ update msg model =
         Delete uid ->
             ( { model | entries = List.filter (\e -> not (e.uid == uid)) model.entries }, Cmd.none )
 
+        ChangeFilter filter ->
+            ( { model | filter = filter }, Cmd.none )
+
 
 view : Model -> Html Msg
 view model =
     div [ class "todomvc-wrapper" ]
         [ section [ class "todoapp" ]
             [ showHeader model
-            , showEntries model.entries
+            , showEntries model
+            , showFooter model
             ]
         ]
 
@@ -100,12 +106,24 @@ showHeader model =
         ]
 
 
-showEntries : List Entry -> Html Msg
-showEntries entries =
-    section [ class "main" ]
-        [ input [ class "toggle-all", type_ "checkbox", onClick CheckAll ] []
-        , ul [ class "todo-list" ] (List.map showEntry entries)
-        ]
+showEntries : Model -> Html Msg
+showEntries model =
+    let
+        entries =
+            case model.filter of
+                "Completed" ->
+                    List.filter (\e -> e.isCompleted) model.entries
+
+                "Active" ->
+                    List.filter (\e -> not e.isCompleted) model.entries
+
+                _ ->
+                    model.entries
+    in
+        section [ class "main" ]
+            [ input [ class "toggle-all", type_ "checkbox", onClick CheckAll ] []
+            , ul [ class "todo-list" ] (List.map showEntry entries)
+            ]
 
 
 showEntry : Entry -> Html Msg
@@ -122,6 +140,36 @@ showEntry entry =
                 [ input [ class "toggle", type_ "checkbox", onClick (Check entry.uid), checked entry.isCompleted ] []
                 , label [] [ text entry.description ]
                 , button [ class "destroy", onClick (Delete entry.uid) ] []
+                ]
+            ]
+
+
+showFooter model =
+    let
+        itemsLeftInTodo =
+            List.filter (\e -> not e.isCompleted) model.entries |> List.length
+
+        selectedClass filter =
+            if model.filter == filter then
+                "selected"
+            else
+                ""
+    in
+        footer [ class "footer" ]
+            [ span [ class "todo-count" ]
+                [ text (toString itemsLeftInTodo)
+                , text " items left"
+                ]
+            , ul [ class "filters" ]
+                [ li []
+                    [ a [ class (selectedClass "All"), onClick (ChangeFilter "All") ] [ text "All" ]
+                    ]
+                , li []
+                    [ a [ class (selectedClass "Active"), onClick (ChangeFilter "Active") ] [ text "Active" ]
+                    ]
+                , li []
+                    [ a [ class (selectedClass "Completed"), onClick (ChangeFilter "Completed") ] [ text "Completed" ]
+                    ]
                 ]
             ]
 
