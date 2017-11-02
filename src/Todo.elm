@@ -8,19 +8,26 @@ import Json.Decode as Json
 import String
 
 
-main : Program Never Model Msg
+main : Program (Maybe Model) Model Msg
 main =
-    Html.program
+    Html.programWithFlags
         { init = init
         , view = view
-        , update = update
+        , update = updateWithStorage
         , subscriptions = (\_ -> Sub.none)
         }
 
 
-init : ( Model, Cmd msg )
-init =
-    ( { entries = [], currentUid = 0, currentInput = "", filter = "All" }, Cmd.none )
+emptyModel =
+    { entries = [], currentUid = 0, currentInput = "", filter = "All" }
+
+
+init : Maybe Model -> ( Model, Cmd msg )
+init newModel =
+    ( Maybe.withDefault emptyModel newModel, Cmd.none )
+
+
+port setStorage : Model -> Cmd msg
 
 
 type alias Model =
@@ -46,6 +53,17 @@ type Msg
     | CheckAll
     | ChangeFilter String
     | ClearCompleted
+
+
+updateWithStorage : Msg -> Model -> ( Model, Cmd Msg )
+updateWithStorage msg model =
+    let
+        ( newModel, cmds ) =
+            update msg model
+    in
+        ( newModel
+        , Cmd.batch [ setStorage newModel, cmds ]
+        )
 
 
 update : Msg -> Model -> ( Model, Cmd msg )
