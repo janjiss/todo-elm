@@ -18,6 +18,7 @@ main =
         }
 
 
+init : ( Model, Cmd msg )
 init =
     ( 1, Cmd.none )
 
@@ -27,12 +28,26 @@ type alias Model =
 
 
 type Msg
-    = Add
+    = Increment
+    | Decrement
 
 
-update cmd model =
-    ( model, Cmd.none )
+update : Msg -> Model -> ( Model, Cmd msg )
+update msg model =
+    case msg of
+        Increment ->
+            ( model + 1, Cmd.none )
+
+        Decrement ->
+            ( model + -1, Cmd.none )
 
 
+view : Model -> Html Msg
 view model =
-    text (toString model)
+    div []
+        [ input [ type_ "button", onClick Increment, value "Increment" ] []
+        , div [] []
+        , text (toString model)
+        , div [] []
+        , input [ type_ "button", onClick Decrement, value "Decrement" ] []
+        ]
