@@ -1,4 +1,4 @@
-module Todo exposing (..)
+port module Todo exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -7,8 +7,8 @@ import Json.Decode as Json
 
 
 main =
-    Html.program
-        { view = view, subscriptions = subscriptions, update = update, init = init }
+    Html.programWithFlags
+        { view = view, subscriptions = subscriptions, update = updateWithStorage, init = init }
 
 
 emptyModel =
@@ -18,9 +18,12 @@ emptyModel =
     }
 
 
-init : ( Model, Cmd Msg )
-init =
-    ( emptyModel, Cmd.none )
+port setStorage : Model -> Cmd msg
+
+
+init : Maybe Model -> ( Model, Cmd Msg )
+init model =
+    ( Maybe.withDefault emptyModel model, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
@@ -32,6 +35,7 @@ type Msg
     = Add
     | UpdateInput String
     | Check Int
+    | RemoveEntry Int
 
 
 type alias Model =
@@ -46,6 +50,14 @@ type alias Entry =
     , uid : Int
     , isCompleted : Bool
     }
+
+
+updateWithStorage msg model =
+    let
+        ( newModel, cmd ) =
+            update msg model
+    in
+        ( newModel, Cmd.batch [ cmd, setStorage newModel ] )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -74,6 +86,13 @@ update msg model =
 
                 newEntries =
                     List.map checkEntry model.entries
+            in
+                ( { model | entries = newEntries }, Cmd.none )
+
+        RemoveEntry uid ->
+            let
+                newEntries =
+                    List.filter (\e -> not (e.uid == uid)) model.entries
             in
                 ( { model | entries = newEntries }, Cmd.none )
 
@@ -120,8 +139,15 @@ showEntry entry =
     in
         li [ class completedClass ]
             [ div [ class "view" ]
-                [ input [ class "toggle", type_ "checkbox", checked entry.isCompleted, onClick (Check entry.uid) ] []
+                [ input
+                    [ class "toggle"
+                    , type_ "checkbox"
+                    , checked entry.isCompleted
+                    , onClick (Check entry.uid)
+                    ]
+                    []
                 , label [] [ text entry.description ]
+                , button [ class "destroy", onClick (RemoveEntry entry.uid) ] []
                 ]
             ]
 
