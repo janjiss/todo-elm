@@ -11,9 +11,16 @@ main =
         { view = view, subscriptions = subscriptions, update = update, init = init }
 
 
+emptyModel =
+    { entries = []
+    , currentInput = ""
+    , currentUid = 0
+    }
+
+
 init : ( Model, Cmd Msg )
 init =
-    ( { entries = [ "My first task", "My second task" ], currentInput = "" }, Cmd.none )
+    ( emptyModel, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
@@ -24,27 +31,54 @@ subscriptions model =
 type Msg
     = Add
     | UpdateInput String
+    | Check Int
 
 
 type alias Model =
-    { entries : List String
+    { entries : List Entry
     , currentInput : String
+    , currentUid : Int
     }
 
 
+type alias Entry =
+    { description : String
+    , uid : Int
+    , isCompleted : Bool
+    }
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Add ->
             let
                 newEntries =
-                    List.append model.entries [ model.currentInput ]
+                    List.append model.entries [ { description = model.currentInput, uid = model.currentUid, isCompleted = False } ]
+
+                newUid =
+                    model.currentUid + 1
             in
-                ( { model | entries = newEntries, currentInput = "" }, Cmd.none )
+                ( { model | entries = newEntries, currentInput = "", currentUid = newUid }, Cmd.none )
 
         UpdateInput inputValue ->
             ( { model | currentInput = inputValue }, Cmd.none )
 
+        Check uid ->
+            let
+                checkEntry entry =
+                    if entry.uid == uid then
+                        { entry | isCompleted = not entry.isCompleted }
+                    else
+                        entry
 
+                newEntries =
+                    List.map checkEntry model.entries
+            in
+                ( { model | entries = newEntries }, Cmd.none )
+
+
+view : Model -> Html Msg
 view model =
     div [ class "todomvc-wrapper" ]
         [ section [ class "todoapp" ]
@@ -54,6 +88,7 @@ view model =
         ]
 
 
+showHeader : Model -> Html Msg
 showHeader model =
     header [ class "header" ]
         [ h1 [] [ text "todos" ]
@@ -68,17 +103,27 @@ showHeader model =
         ]
 
 
+showEntries : Model -> Html Msg
 showEntries model =
     section [ class "main" ]
         [ ul [ class "todo-list" ] (List.map showEntry model.entries) ]
 
 
+showEntry : Entry -> Html Msg
 showEntry entry =
-    li []
-        [ div [ class "view" ]
-            [ label [] [ text entry ]
+    let
+        completedClass =
+            if entry.isCompleted then
+                "completed"
+            else
+                ""
+    in
+        li [ class completedClass ]
+            [ div [ class "view" ]
+                [ input [ class "toggle", type_ "checkbox", checked entry.isCompleted, onClick (Check entry.uid) ] []
+                , label [] [ text entry.description ]
+                ]
             ]
-        ]
 
 
 onEnter msg =
