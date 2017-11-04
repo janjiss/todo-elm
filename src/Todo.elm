@@ -3,6 +3,7 @@ module Todo exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Json.Decode as Json
 
 
 main =
@@ -12,7 +13,7 @@ main =
 
 init : ( Model, Cmd Msg )
 init =
-    ( { entries = [ "My first task", "My second task" ] }, Cmd.none )
+    ( { entries = [ "My first task", "My second task" ], currentInput = "" }, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
@@ -22,15 +23,26 @@ subscriptions model =
 
 type Msg
     = Add
+    | UpdateInput String
 
 
 type alias Model =
     { entries : List String
+    , currentInput : String
     }
 
 
 update msg model =
-    ( model, Cmd.none )
+    case msg of
+        Add ->
+            let
+                newEntries =
+                    List.append model.entries [ "New task" ]
+            in
+                ( { model | entries = newEntries }, Cmd.none )
+
+        UpdateInput inputValue ->
+            ( { model | currentInput = inputValue }, Cmd.none )
 
 
 view model =
@@ -45,6 +57,7 @@ view model =
 showHeader =
     header [ class "header" ]
         [ h1 [] [ text "todos" ]
+        , input [ class "new-todo", placeholder "What needs to be done?", onEnter Add, onInput UpdateInput ] []
         ]
 
 
@@ -59,3 +72,14 @@ showEntry entry =
             [ label [] [ text entry ]
             ]
         ]
+
+
+onEnter msg =
+    let
+        isEnter key =
+            if key == 13 then
+                Json.succeed msg
+            else
+                Json.fail "Not enter"
+    in
+        on "keydown" (Json.andThen isEnter keyCode)
