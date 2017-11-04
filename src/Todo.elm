@@ -37,9 +37,9 @@ update msg model =
         Add ->
             let
                 newEntries =
-                    List.append model.entries [ "New task" ]
+                    List.append model.entries [ model.currentInput ]
             in
-                ( { model | entries = newEntries }, Cmd.none )
+                ( { model | entries = newEntries, currentInput = "" }, Cmd.none )
 
         UpdateInput inputValue ->
             ( { model | currentInput = inputValue }, Cmd.none )
@@ -48,16 +48,23 @@ update msg model =
 view model =
     div [ class "todomvc-wrapper" ]
         [ section [ class "todoapp" ]
-            [ showHeader
+            [ showHeader model
             , showEntries model
             ]
         ]
 
 
-showHeader =
+showHeader model =
     header [ class "header" ]
         [ h1 [] [ text "todos" ]
-        , input [ class "new-todo", placeholder "What needs to be done?", onEnter Add, onInput UpdateInput ] []
+        , input
+            [ class "new-todo"
+            , placeholder "What needs to be done?"
+            , onEnter Add
+            , onInput UpdateInput
+            , value model.currentInput
+            ]
+            []
         ]
 
 
